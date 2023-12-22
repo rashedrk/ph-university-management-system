@@ -1,5 +1,7 @@
 import { Schema, model } from 'mongoose';
 import { TUser } from './user.interface';
+import bcrypt from 'bcrypt';
+import config from '../../config/config';
 
 const userSchema = new Schema<TUser>({
     id: {
@@ -30,5 +32,21 @@ const userSchema = new Schema<TUser>({
 }, {
     timestamps: true,
 });
+
+//Middlewares
+userSchema.pre('save', async function (next) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const user = this;
+    user.password = await bcrypt.hash(
+        user.password,
+        Number(config.bcyrpt_salt_rounds));
+    next();
+})
+
+// returning empty string ' ' after data save into DB
+userSchema.post('save', function (doc, next) {
+    doc.password = '';
+    next();
+})
 
 export const User = model<TUser>('User', userSchema);

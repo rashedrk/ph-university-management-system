@@ -1,8 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { StudentModel, TGuardian, TStudent, TUsername, TlocalGuardian } from './student.interface';
 import validator from 'validator';
-import bcrypt from 'bcrypt';
-import config from '../../config/config';
 
 const usernameSchema = new Schema<TUsername>({
   firstName: {
@@ -58,11 +56,6 @@ const studentSchema = new Schema<TStudent, StudentModel>({
     type: usernameSchema,
     required: [true, "Student's Name is required"],
   },
-  password: {
-    type: String,
-    required: [true, "Student's Password is required"],
-    maxlength: [20, "Student's Password cannot exceed 20 characters"]
-  },
   gender: {
     type: String,
     enum: {
@@ -113,23 +106,6 @@ studentSchema.virtual('fullName').get(function () {
   return `${this.name.firstName} ${this.name.middleName} ${this.name.lastName}`
 })
 
-//Middlewares
-
-//works for create() and save()
-studentSchema.pre('save', async function (next) {
-  // eslint-disable-next-line @typescript-eslint/no-this-alias
-  const user = this;
-  user.password = await bcrypt.hash(
-    user.password,
-    Number(config.bcyrpt_salt_rounds));
-
-  next();
-})
-
-studentSchema.post('save', function (doc, next) {
-  doc.password = '';
-  next();
-})
 
 //Query middleware
 studentSchema.pre('find', function (next) {
